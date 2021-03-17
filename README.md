@@ -1,4 +1,4 @@
-This repository contains low level drivers used by and STM32F103RB board based on a MCU Cortex M3
+This repository contains low level drivers used by an STM32F103RB board based on a MCU Cortex M3
 
 The low level drivers can control the following peripherals:
 
