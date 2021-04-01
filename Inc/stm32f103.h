@@ -143,6 +143,19 @@ typedef struct{
 }UART_RegDef_t;
 
 
+//Structure for I2C
+typedef struct{
+	__vo uint32_t	I2C_CR1;
+	__vo uint32_t	I2C_CR2;
+	__vo uint32_t	I2C_OAR1;
+	__vo uint32_t	I2C_OAR2;
+	__vo uint32_t	I2C_DR;				/*I2C REGISTERS					ADDRESS OFFSET: 0X00*/
+	__vo uint32_t	I2C_SR1;
+	__vo uint32_t	I2C_SR2;
+	__vo uint32_t	I2C_CCR;
+	__vo uint32_t	I2C_TRISE;
+}I2C_RegDef_t;
+
 /*
  * Peripheral definitions (peripheral base address typecasted to GPIO_RegDef_t)
  */
@@ -257,6 +270,19 @@ typedef struct{
 #define		UART5_PCLK_DIS()		RCC->RCC_APB1ENR &= ~(1<<20)
 
 
+/*
+ * I2C Peripheral definitions (peripheral base address typecasted to I2C_RegDef_t)
+ */
+#define		I2C1		((I2C_RegDef_t*) I2C1_BASEADDR)
+#define		I2C2		((I2C_RegDef_t*) I2C2_BASEADDR)
+/*
+ * Peripheral macros to enable and disable I2C peripherals clock
+ */
+#define		I2C1_PCLK_EN()			RCC->RCC_APB1ENR |= (1<<21)
+#define		I2C2_PCLK_EN()			RCC->RCC_APB1ENR |= (1<<22)
+#define		I2C1_PCLK_DIS()			RCC->RCC_APB1ENR &= ~(1<<21)
+#define		I2C2_PCLK_DIS()			RCC->RCC_APB1ENR &= ~(1<<22)
+
 
 /*
  * EXTI Peripheral definitions (peripheral base address typecasted to EXTI_RegDef_t)
@@ -334,9 +360,11 @@ typedef struct{
 #define	IRQ_NO_EXTI4		10
 #define	IRQ_NO_EXTI9_5		23
 #define	IRQ_NO_EXTI15_10	40
+
 #define IRQ_NO_SPI1			35
 #define IRQ_NO_SPI2			36
 #define IRQ_NO_SPI3			51
+
 #define IRQ_NO_UART1		37
 #define IRQ_NO_UART2		38
 #define IRQ_NO_UART3		39

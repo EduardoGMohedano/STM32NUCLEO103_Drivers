@@ -10,6 +10,9 @@
 
 #include "stm32f103.h"
 
+/*
+ * This structure is used to set the SPI settings
+ */
 typedef struct{
 	uint8_t SPI_Baud_Rate;
 	uint8_t	SPI_Data_Frame_Format;	//Buffer size
@@ -20,7 +23,9 @@ typedef struct{
 	uint8_t SPI_SSM;
 }SPI_Config_t;
 
-
+/*
+ * This is a handle structure for a SPI Peripheral
+ */
 typedef struct{
 	SPI_RegDef_t	*pSPIx;
 	SPI_Config_t	SPI_PinConfig;
@@ -46,11 +51,10 @@ typedef struct{
 #define 	SPI_Master		1
 
 /*
- * @SPI Bus config
+ * @SPI Bus config, either Full or Half duplex
  */
 #define 	SPI_MODE_FD		0
 #define 	SPI_MODE_HD		1
-
 
 /*
  * Clock Polarity
@@ -73,14 +77,13 @@ typedef struct{
 #define 	SPI_MODE4		4
 
 /*
- * @SPI SSM
+ * @SPI Software Slave Management mode (Hardware or Software)
  */
 #define		SPI_SSM_HW		0
 #define		SPI_SSM_SW		1
 
-
 /*
- *@SPI clock speeds
+ *@SPI clock speed division
  */
 #define 	SPI_PCLK_DIV2		0
 #define 	SPI_PCLK_DIV4		1
@@ -92,18 +95,31 @@ typedef struct{
 #define 	SPI_PCLK_DIV256		7
 
 /*
+ * Macros to enable or disable the SPI (this is different from enabling the Peripheral clock)
+ */
+#define		SPI1_ENABLE()				SPI1->SPI_CR1 |= (1<<6)
+#define		SPI2_ENABLE()				SPI2->SPI_CR1 |= (1<<6)
+#define		SPI3_ENABLE()				SPI3->SPI_CR1 |= (1<<6)
+
+#define		SPI1_DISNABLE()				SPI1->SPI_CR1 &= ~(1<<6)
+#define		SPI2_DISNABLE()				SPI2->SPI_CR1 &= ~(1<<6)
+#define		SPI3_DISNABLE()				SPI3->SPI_CR1 &= ~(1<<6)
+
+/*
  * SPI Definitions for Interrupt sources (Mode)
  */
 #define		SPI_IRQ_TX_BUFFER_EMPTY			(7)		//Interrupt when the transmit buffer is empty
 #define		SPI_IRQ_RX_BUFFER_NOEMPTY		(6)		//Interrupt when the receiver buffer is not empty which means data can be read
 #define		SPI_IRQ_ERROR					(5)		//Interrupt for either Overrun o Underrun error *It is needed to check for their respective flags
+#define 	SPI_IRQ_TX_DMA					(1)		//Interrupt fro TX DMA buffer
+
 
 /*****************************************************************************
  *                    APIs supported by this driver
  *****************************************************************************/
 
 /*
- * SPI INIT AND DE INIT FUNCTIONS
+ * SPI init and deinit functions
  */
 void SPI_Init(SPI_Handle_t* pSPIHandle);
 void SPI_DeInit(SPI_RegDef_t* pSPIx);
@@ -119,7 +135,7 @@ void SPI_PeriCLKControl(SPI_RegDef_t* pSPIx, uint8_t EnorDi);
 void SPI_PeripheralControl(SPI_RegDef_t* pSPIx, uint8_t EnorDi);
 
 /*
- * SPI SSI pin function control
+ * SPI Internal Slave Select pin function control
  */
 void SPI_SSI_Config(SPI_RegDef_t* pSPIx, uint8_t EnorDi);
 
@@ -130,26 +146,11 @@ void 		SPI_Write_Char(SPI_RegDef_t* pSPIx, uint32_t data);
 void 		SPI_Write_String(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size);
 uint16_t	SPI_ReadData(SPI_RegDef_t* pSPIx);  /*Data are declared as pointers*/
 
-
 /*
  * IRQ handler and its configuration
  */
 void SPI_IRQ_Mode(SPI_RegDef_t* pSPIx, uint8_t Mode, uint8_t EnorDi);		//This function is used to configure Rising or Falling edge Interrupt Trigger
 void SPI_IRQConfig(uint8_t IRQNumber,uint8_t IRQPriority, uint8_t EnorDi);
 void SPI_IRQHandling(uint8_t IRQNumber);
-
-
-/*
- * Macros to enable or disable the SPI (this is different from enabling the Peripheral clock)
- */
-#define		SPI1_ENABLE()				SPI1->SPI_CR1 |= (1<<6)
-#define		SPI2_ENABLE()				SPI2->SPI_CR1 |= (1<<6)
-#define		SPI3_ENABLE()				SPI3->SPI_CR1 |= (1<<6)
-
-#define		SPI1_DISNABLE()				SPI1->SPI_CR1 &= ~(1<<6)
-#define		SPI2_DISNABLE()				SPI2->SPI_CR1 &= ~(1<<6)
-#define		SPI3_DISNABLE()				SPI3->SPI_CR1 &= ~(1<<6)
-
-
 
 #endif /* INC_STM32F103_SPI_DRIVER_H_ */

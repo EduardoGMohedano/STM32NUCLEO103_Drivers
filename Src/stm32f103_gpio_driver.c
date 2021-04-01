@@ -170,7 +170,7 @@ void GPIO_PeriCLKControl(GPIO_RegDef_t* pGPIOx, uint8_t EnorDi){
  */
 uint8_t 	GPIO_ReadFromInputPin(GPIO_RegDef_t* pGPIOx, uint8_t PinNumber){
 	//Can i make this func return a bool value
-	return (uint8_t) ((pGPIOx->IDR >> PinNumber)& 0x00000001);
+	return (uint8_t) ((pGPIOx->IDR >> PinNumber) & 1);
 
 }
 

@@ -11,6 +11,7 @@
 #include "stm32f103.h"
 
 /*
+ * This structure is used to set the UART settings
  */
 typedef struct{
 	uint8_t		Word_Length;		//Use it to send either 8 or 9 bits
@@ -50,6 +51,9 @@ typedef struct{
 #define		UART_PARITY_ODD				(1)
 #define		UART_PARITY_NONE			(2)
 
+/*
+ * UART Definitions for interruption sources
+ */
 #define 	UART_IRQ_TX_DR_EMPTY		(7)			//Transmit data register empty
 #define 	UART_IRQ_TX_COMPLETED		(6)			//Transmission is complete
 #define 	UART_IRQ_RX_COMPLETED		(5)			//Received data is readyy to be read
@@ -57,7 +61,7 @@ typedef struct{
 
 
 /*
- * Definitons to Enabble or Disable Peripheral Clock
+ * Definitons to Enable or Disable Peripheral Clock
  */
 #define		UART1_ENABLE()				(UART1->UART_CR1 |= (1<<13))
 #define		UART2_ENABLE()				(UART2->UART_CR1 |= (1<<13))

@@ -179,11 +179,11 @@ void UART_Init(UART_Handle_t* pUARTHandle){
  */
 void UART_DeInit(UART_RegDef_t* pUARTx){
 	//Apply the proper reset on respective Bus, either APB1 or APB2 on which the peripheral is hanging
-	if(pUARTx == UART1)	RCC->RCC_APB2RSTR &= ~(1<<14);	//Only UART1 hangs on APB2 Bus
-	if(pUARTx == UART2) RCC->RCC_APB1RSTR &= ~(1<<17);
-	if(pUARTx == UART3) RCC->RCC_APB1RSTR &= ~(1<<18);
-	if(pUARTx == UART4) RCC->RCC_APB1RSTR &= ~(1<<19);
-	if(pUARTx == UART5) RCC->RCC_APB1RSTR &= ~(1<<20);
+	if(pUARTx == UART1)	RCC->RCC_APB2RSTR |= (1<<14);	//Only UART1 hangs on APB2 Bus
+	if(pUARTx == UART2) RCC->RCC_APB1RSTR |= (1<<17);
+	if(pUARTx == UART3) RCC->RCC_APB1RSTR |= (1<<18);
+	if(pUARTx == UART4) RCC->RCC_APB1RSTR |= (1<<19);
+	if(pUARTx == UART5) RCC->RCC_APB1RSTR |= (1<<20);
 
 }
 
