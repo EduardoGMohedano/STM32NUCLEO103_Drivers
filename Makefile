@@ -7,27 +7,28 @@
 
 CC=arm-none-eabi-gcc
 src=$(wildcard ./Src/*.c)
-inc=$(wildcard ./Inc/*.h)
+inc=-I './Inc/'
 
-flags= -mcpu=cortex-m3 -std=gnu11 -O0 -Wall --specs=nano.specs --mfloat-abi=soft -mthumb
-
+ARCHFLAGS=-mcpu=cortex-m3 -std=gnu11 --specs=nano.specs -mfloat-abi=soft -mthumb
+CFLAGS=-Wall -g -O0 -std=c99
 startup=startup_stm32f103rbtx.s
 linker_file=STM32F103RBTX_FLASH.ld
 target=output
 
-objs:
-	%.c:%.o
+objs:=$(src:.c=.o)
+%.o: %.c
+	 $(CC) $< $(CFLAGS) $(inc) $(ARCHFLAGS) -c -o $@
 
 
 #echo $(src)
 
 .PHONY: drivers
-drivers:
-	@echo "Generating object files for all drivers!!!"
-	$(CC) $(src) -c -o $(objs)
+drivers: $(objs)
+	@echo "Object files for all drivers were generated!!!"
+	
 
 .PHONY:	clean
 clean:
-	@echo "Removing object files and target binary"
+	@echo "Removing object files and target binary!!!"
 	rm $(objs)
 
