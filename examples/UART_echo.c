@@ -25,9 +25,10 @@ int main(void)
 	/* Configure GPIO pin RX, using PA10*/
 	GPIO_Handle_t	gpioRX;
 	gpioRX.pGPIOx = GPIOA;
-	gpioRX.GPIO_PinConfig.PinMode = GPIO_MODE_AF_PP;
-	gpioRX.GPIO_PinConfig.PinNumber = 9;
-	gpioRX.GPIO_PinConfig.PinSpeed = GPIO_MODE_OUT_LS;
+	gpioRX.GPIO_PinConfig.PinMode = GPIO_MODE_IN_PU_PD;
+	gpioRX.GPIO_PinConfig.PinNumber = 10;
+	gpioRX.GPIO_PinConfig.PinSpeed = GPIO_MODE_INPUT;
+	gpioRX.GPIO_PinConfig.PinResistor = GPIO_PU;
 	GPIO_Init(&gpioRX);
 
 	//Initialize AFIO clock
@@ -40,6 +41,7 @@ int main(void)
 	UART_Con.UART_Config.Stop_Bits = UART_STOP_BITS_2;
 	UART_Con.UART_Config.Word_Length = UART_DATA_LENGTH_7BITS;
 	UART_Con.UART_Config.Parity = UART_PARITY_EVEN;
+	UART_Con.UART_Config.HWFlow_Control = UART_HW_FLOW_CTRL_NONE;
 	UART_PeriCLKControl(UART1, ENABLE);
 	UART_Init(&UART_Con);
 	
