@@ -19,6 +19,8 @@ typedef struct{
 	uint32_t	Baud_Rate;			//Used to set Baud Rate for Data Transmission
 	uint8_t		Mode;				//Used to enable Transmitter, Receiver or both modes
 	uint8_t		Parity;
+	uint8_t		HWFlow_Control;
+	uint32_t	External_clk;		//Set the variable in case an external Crystal is being used
 }UART_Config_t;
 
 /*
@@ -50,6 +52,12 @@ typedef struct{
 #define		UART_PARITY_EVEN			(0)
 #define		UART_PARITY_ODD				(1)
 #define		UART_PARITY_NONE			(2)
+
+#define 	UART_HW_FLOW_CTRL_NONE		(0)
+#define 	UART_HW_FLOW_CTS			(2)
+#define 	UART_HW_FLOW_RTS			(1)
+#define 	UART_HW_FLOW_CTS_RTS		(3)				//Macros for defining Hardware Flow Control this mode is
+														//available only for UART1, 2 and 3
 
 /*
  * UART Definitions for interruption sources

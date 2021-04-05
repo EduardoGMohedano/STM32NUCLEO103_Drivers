@@ -76,9 +76,6 @@
 										  (((RCC->RCC_CFGR>>18)&0xF) == 13) ? exclk*15 :\
 										  (((RCC->RCC_CFGR>>18)&0xF) == 14) ? exclk*16 : exclk*16)
 
-extern uint8_t	CLK_SRC = 0;
-
-
 /***************************************************
  * @fn			-	UART_INIT
  *
@@ -113,13 +110,13 @@ void UART_Init(UART_Handle_t* pUARTHandle){
 		break;
 
 		case HIGH_SPEED_EXTERNAL:
-			Fclk = CLK_SRC;
+			Fclk = pUARTHandle->UART_Config.External_clk;
 		break;
 
 		case PHASE_LOCKED_LOOP:
 			if ( ((RCC->RCC_CFGR>>16)&1) ){
 				//Apply predivision macro to HSE clock
-				Fclk = DIV_PREDIV1(CLK_SRC);
+				Fclk = DIV_PREDIV1(pUARTHandle->UART_Config.External_clk);
 			}
 			else{
 				//High Speed Internal RC 8 Mhz clock
@@ -165,7 +162,8 @@ void UART_Init(UART_Handle_t* pUARTHandle){
 		default:
 		break;
 	}
-
+	//Activate Hardware Flow Control
+	pUARTHandle->pUARTx->UART_CR3 |= (pUARTHandle->UART_Config.HWFlow_Control << 8);
 }
 
 
