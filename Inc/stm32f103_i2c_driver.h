@@ -11,9 +11,10 @@
 #include "stm32f103.h"
 
 typedef struct{
-	uint8_t 	I2C_ACK;
-	uint8_t		I2C_ADDMODE;
-	uint8_t		I2C_MODE;
+	uint8_t 	I2C_ACK_CTRL;
+	uint8_t		I2C_FM_DUTY_CYCLE;
+	uint8_t		I2C_ADDRESS;		//Own device address if mcu is selected as slave
+	uint8_t		I2C_SPEED_MODE;
 	uint32_t	I2C_SPEED;
 }I2C_Config_t;
 
@@ -23,15 +24,46 @@ typedef struct{
 }I2C_Handle_t;
 
 /*
+ * @I2C Speed Mode macros
+ */
+#define 	I2C_SPEED_SM		0		//To select this mode Peripheral clock must be at least 2Mhz, SCL up to 100KHz
+#define 	I2C_SPEED_FM		1		//To select this mode Peripheral clock must be at least 4Mhz, SCL up to 400KHz
+
+/*
+ * @I2C Acknowledge control
+ */
+#define 	I2C_ACK_ENABLE		1
+#define 	I2C_ACK_DISABLE		0
+
+/*
+ * I2C FM duty cycle
+ */
+#define		I2C_FM_DUTY_2		0
+#define		I2C_FM_DUTY_16_9	1
+
+/*
  * Macros to define I2C Interrupt sources
  */
-#define		I2C_IRQ_START_BIT_SENT
-#define		I2C_IRQ_ADDRESS						//IF MASTER IT MEANS SENT, IF SLAVE ADDRESS IS MATCHED
-#define 	I2C_IRQ_10_BIT_HEADER_SENT
-#define 	I2C_IRQ_STOP_RECEIVED
-#define 	I2C_IRQ_BYTE_TRANSFER_FINISHED
-#define 	I2C_IRQ_RX_BUFFER_NOT_EMPTY
-#define 	I2C_IRQ_TX_BUFFER_EMPTY
+#define		I2C_IRQ_START_BIT_SENT			0
+#define		I2C_IRQ_ADDRESS					1	//If mcu is Master it means send data, if mcu is slave address is matched
+#define 	I2C_IRQ_10_BIT_HEADER_SENT		2
+#define 	I2C_IRQ_STOP_RECEIVED			3
+#define 	I2C_IRQ_BYTE_TRANSFER_FINISHED	4
+#define 	I2C_IRQ_RX_BUFFER_NOT_EMPTY		5
+#define 	I2C_IRQ_TX_BUFFER_EMPTY			6
+
+/*
+ * Macro to get CCR value to be loaded
+ */
+#define		I2C_GET_CCR_SM(FPher,Fi2c)				((FPher)/(Fi2c*2))
+#define		I2C_GET_CCR_FM_DUTY_2(FPher,Fi2c)		((FPher)/(Fi2c*3))
+#define		I2C_GET_CCR_FM_DUTY_16_9(FPher,Fi2c)	((FPher)/(Fi2c*25))
+
+/*
+ * Macros to define Maximum Rise time as per Standard, expresed in nanoseconds
+ */
+#define		I2C_MAX_RISE_TIME_SM	1000
+#define		I2C_MAX_RISE_TIME_FM	300
 
 /*
  * Init and Deinit functions for a I2C Peripheral
@@ -48,9 +80,13 @@ void I2C_PeripheralControl(I2C_RegDef_t* pI2Cx, uint8_t EnorDi);
 /*
  * Functions to read and write through the given I2C Peripheral
  */
-void I2C_Write_Char(I2C_RegDef_t* pI2Cx, char data);
-void I2C_Write_String(I2C_RegDef_t* pI2Cx, char* data_buffer, uint8_t size);
+void I2C_Master_SendData(I2C_RegDef_t* pI2Cx, char* data_buffer, uint8_t size, uint8_t SlaveAddr);
 char I2C_Read(I2C_RegDef_t* pI2Cx);
+
+/*
+ * Functions to implement Writing sequences of data
+ */
+static void I2C_ClearADDRFlag(I2C_RegDef_t* pI2Cx);
 
 /*
  * Functions to set Interrupts configuration and handling
