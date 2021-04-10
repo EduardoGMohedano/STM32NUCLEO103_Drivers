@@ -11,24 +11,35 @@ inc=-I './Inc/'
 
 ARCHFLAGS=-mcpu=cortex-m3 -std=gnu11 --specs=nano.specs -mfloat-abi=soft -mthumb
 CFLAGS=-Wall -g -O0 -std=c99
-startup=startup_stm32f103rbtx.s
+startup=startup_stm32f103rbtx
 linker_file=STM32F103RBTX_FLASH.ld
-target=output
+target=./examples/$(output)
+
+#append target main src file
+src+=$(target).c
 
 objs:=$(src:.c=.o)
 %.o: %.c
 	 $(CC) $< $(CFLAGS) $(inc) $(ARCHFLAGS) -c -o $@
 
+.PHONY: names
+names:	
+	@echo $(objs)
 
-#echo $(src)
+.PHONY: all
+all:	$(objs)	
+	$(CC) $(startup).s $(CFLAGS) $(ARCHFLAGS) -c -o $(startup).o
+	$(CC) $(objs) $(startup).o $(ARCHFLAGS) -T"./"$(linker_file) -o $(target).out   
+
 
 .PHONY: drivers
 drivers: $(objs)
+	@echo $(objs)
 	@echo "Object files for all drivers were generated!!!"
 	
 
 .PHONY:	clean
 clean:
 	@echo "Removing object files and target binary!!!"
-	rm $(objs)
+	rm $(objs) $(startup).o
 
