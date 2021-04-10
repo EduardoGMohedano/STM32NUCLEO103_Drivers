@@ -389,8 +389,6 @@ typedef struct{
 /*
  * Generic macros
  */
-
-
 #define		ENABLE			1
 #define 	DISABLE			0
 #define		SET				ENABLE
@@ -399,6 +397,77 @@ typedef struct{
 #define		GPIO_PIN_RESET	RESET
 #define 	RISING_EDGE		1
 #define		FALLING_EDGE	0
+
+/*
+ * Macros to determine clock source and frequency on APB Buses
+ */
+#define		HIGH_SPEED_INTERNAL		(0)
+#define		HIGH_SPEED_EXTERNAL		(1)
+#define		PHASE_LOCKED_LOOP		(2)
+
+#define		DIV_AHB_PREESCALER(sysclk)	( (((RCC->RCC_CFGR>>4)&0xF) == 0) ? sysclk :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 1) ? sysclk :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 2) ? sysclk :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 3) ? sysclk :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 4) ? sysclk :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 5) ? sysclk :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 6) ? sysclk :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 7) ? sysclk :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 8) ? sysclk/2 :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 9) ? sysclk/4 :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 10) ? sysclk/8 :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 11) ? sysclk/16 :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 12) ? sysclk/64 :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 13) ? sysclk/128 :\
+										  (((RCC->RCC_CFGR>>4)&0xF) == 14) ? sysclk/256 : sysclk/512)
+
+#define		DIV_APB2_PREESCALER(hclk)	( (((RCC->RCC_CFGR>>11)&0x7) == 0) ? hclk :\
+										  (((RCC->RCC_CFGR>>11)&0x7) == 1) ? hclk :\
+										  (((RCC->RCC_CFGR>>11)&0x7) == 2) ? hclk :\
+										  (((RCC->RCC_CFGR>>11)&0x7) == 3) ? hclk :\
+										  (((RCC->RCC_CFGR>>11)&0x7) == 4) ? hclk/2 :\
+										  (((RCC->RCC_CFGR>>11)&0x7) == 5) ? hclk/4 :\
+										  (((RCC->RCC_CFGR>>11)&0x7) == 6) ? hclk/8 : hclk/16)
+
+#define		DIV_APB1_PREESCALER(hclk)	( (((RCC->RCC_CFGR>>8)&0x7) == 0) ? hclk :\
+										  (((RCC->RCC_CFGR>>8)&0x7) == 1) ? hclk :\
+										  (((RCC->RCC_CFGR>>8)&0x7) == 2) ? hclk :\
+										  (((RCC->RCC_CFGR>>8)&0x7) == 3) ? hclk :\
+										  (((RCC->RCC_CFGR>>8)&0x7) == 4) ? hclk/2 :\
+										  (((RCC->RCC_CFGR>>8)&0x7) == 5) ? hclk/4 :\
+										  (((RCC->RCC_CFGR>>8)&0x7) == 6) ? hclk/8 : hclk/16)
+
+#define		DIV_PREDIV1(exclk)			( (((RCC->RCC_CFGR>>0)&0xF) == 0) ? exclk :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 1) ? exclk/2 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 2) ? exclk/3 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 3) ? exclk/4 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 4) ? exclk/5 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 5) ? exclk/6 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 6) ? exclk/7 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 7) ? exclk/8 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 8) ? exclk/9 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 9) ? exclk/10 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 10) ? exclk/11 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 11) ? exclk/12 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 12) ? exclk/13 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 13) ? exclk/14 :\
+										  (((RCC->RCC_CFGR>>0)&0xF) == 14) ? exclk/15 : exclk/16)
+
+#define		PLL_MULTIPLICATION(exclk)	( (((RCC->RCC_CFGR>>18)&0xF) == 0) ? exclk*2 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 1) ? exclk*3 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 2) ? exclk*4 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 3) ? exclk*5 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 4) ? exclk*6 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 5) ? exclk*7 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 6) ? exclk*8 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 7) ? exclk*9 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 8) ? exclk*10 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 9) ? exclk*11 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 10) ? exclk*12 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 11) ? exclk*13 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 12) ? exclk*14 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 13) ? exclk*15 :\
+										  (((RCC->RCC_CFGR>>18)&0xF) == 14) ? exclk*16 : exclk*16)
 
 
 #endif /* INC_STM32F103_H_ */
