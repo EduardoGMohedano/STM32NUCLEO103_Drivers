@@ -188,15 +188,15 @@ void 	SPI_Write_String(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size){
 
 	while(size > 0){
 		while( ((pSPIx->SPI_SR>>SPI_SR_TXE)&1) == 0x0 );	//Blocking function to wait until Buffer is empty and avoid corrupting data
-			if( (pSPIx->SPI_CR1>>SPI_CR1_BUFFER_S)&1   ){
-				pSPIx->SPI_DR = *((uint16_t*)data);
-				size-=2;
-				(uint16_t*)data++;
-			}
-			else{
-				pSPIx->SPI_DR = *data;
-				size--;
-				data++;
+		if( (pSPIx->SPI_CR1>>SPI_CR1_BUFFER_S)&1   ){
+			pSPIx->SPI_DR = *((uint16_t*)data);
+			size-=2;
+			(uint16_t*)data++;
+		}
+		else{
+			pSPIx->SPI_DR = *data;
+			size--;
+			data++;
 		}
 	}
 }
