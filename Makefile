@@ -15,21 +15,17 @@ startup=startup_stm32f103rbtx
 linker_file=STM32F103RBTX_FLASH.ld
 target=./examples/$(output)
 
-#append target main src file
+#append main file
 src+=$(target).c
 
 objs:=$(src:.c=.o)
 %.o: %.c
 	 $(CC) $< $(CFLAGS) $(inc) $(ARCHFLAGS) -c -o $@
 
-.PHONY: names
-names:	
-	@echo $(objs)
-
 .PHONY: all
 all:	$(objs)	
 	$(CC) $(startup).s $(CFLAGS) $(ARCHFLAGS) -c -o $(startup).o
-	$(CC) $(objs) $(startup).o $(ARCHFLAGS) -T"./"$(linker_file) -o $(target).out   
+	$(CC) $(objs) $(startup).o $(ARCHFLAGS) -T"./"$(linker_file) --specs=nosys.specs -o $(target).elf   
 
 
 .PHONY: drivers
@@ -41,5 +37,5 @@ drivers: $(objs)
 .PHONY:	clean
 clean:
 	@echo "Removing object files and target binary!!!"
-	rm $(objs) $(startup).o
+	@rm $(objs) $(startup).o ./examples/*.elf ./examples/*.o 
 
