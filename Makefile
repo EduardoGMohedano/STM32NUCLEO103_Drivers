@@ -6,6 +6,8 @@
 
 
 CC=arm-none-eabi-gcc
+SIZE=arm-none-eabi-size
+CP=arm-none-eabi-objcopy
 src=$(wildcard ./Src/*.c)
 inc=-I './Inc/'
 
@@ -26,7 +28,8 @@ objs:=$(src:.c=.o)
 all:	$(objs)	
 	$(CC) $(startup).s $(CFLAGS) $(ARCHFLAGS) -c -o $(startup).o
 	$(CC) $(objs) $(startup).o $(ARCHFLAGS) -T"./"$(linker_file) --specs=nosys.specs -o $(target).elf   
-
+	$(SIZE)	$(target).elf 
+	$(CP) -O binary	$(target).elf $(target).bin 
 
 .PHONY: drivers
 drivers: $(objs)
@@ -37,5 +40,5 @@ drivers: $(objs)
 .PHONY:	clean
 clean:
 	@echo "Removing object files and target binary!!!"
-	@rm $(objs) $(startup).o ./examples/*.elf ./examples/*.o 
+	@rm -f $(objs) $(startup).o ./examples/*.elf ./examples/*.o ./examples/*.bin  
 
