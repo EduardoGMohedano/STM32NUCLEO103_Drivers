@@ -75,11 +75,12 @@ void I2C_Init(I2C_Handle_t* pI2CHandle){
 	//Configure the rise time of pins
 	uint8_t TRISE = 0;
 	if(pI2CHandle->I2C_Config.I2C_SPEED_MODE){	//Fast mode
-		TRISE = (uint8_t) ((float)(hclk/1000000000)*I2C_MAX_RISE_TIME_FM);
+		TRISE = (uint8_t) ((float)(hclk/1000000000U)*I2C_MAX_RISE_TIME_FM);
 	}
 	else{	//Standard mode
-		TRISE = (uint8_t) ((float)(hclk/1000000000)*I2C_MAX_RISE_TIME_SM);
+		TRISE = (uint8_t) ((float)(hclk/1000000000U)*I2C_MAX_RISE_TIME_SM);
 	}
+	TRISE++;
 	pI2CHandle->pI2Cx->I2C_TRISE |= (TRISE & 0x3F);	//Load value
 }
 
@@ -159,15 +160,19 @@ void I2C_PeripheralControl(I2C_RegDef_t* pI2Cx, uint8_t EnorDi){
 void I2C_Master_SendData(I2C_RegDef_t* pI2Cx, char* data_buffer, uint8_t size, uint8_t SlaveAddr){
 	//Start condition
 	pI2Cx->I2C_CR1 |= (1<<8);
-	while( !(pI2Cx->I2C_SR1&1) );	//Wait until Start condition was generated
+	//Wait until Start condition was generated
+	while( !(pI2Cx->I2C_SR1&1) );
 	//Address phase
 	pI2Cx->I2C_DR |= ((SlaveAddr<<1)&0xFE);	//Shift Slave Address to insert at 0th position the r/w bit (write)
-	I2C_ClearADDRFlag(pI2Cx);		//Clearing Address flag
+	//Confirm address phase has been completed
+	while( !((pI2Cx->I2C_SR1>>1)&1) );
+	//Clearing Address flag
+	I2C_ClearADDRFlag(pI2Cx);
 
 	//Send data until size becomes 0
 	while(size > 0){
 		while( !((pI2Cx->I2C_SR1>>7)&1) );
-		pI2Cx->I2C_DR = *data_buffer;
+		pI2Cx->I2C_DR = *((uint8_t*)data_buffer);
 		data_buffer++;
 		size--;
 	}
@@ -178,6 +183,64 @@ void I2C_Master_SendData(I2C_RegDef_t* pI2Cx, char* data_buffer, uint8_t size, u
 	pI2Cx->I2C_CR1 |= (1<<9);
 }
 
+/***************************************************
+ * @fn			-	I2C_Master_ReceiveData
+ *
+ * @brief		-	Receive a buffer of data through I2C
+ *
+ * @param[in]	-	*pI2Cx	Contains the I2C Peripheral to be used
+ * @param[in]	-	data It is the buffer which contains data to be received
+ * @param[in]	-	size It is the size of the buffer
+ * @param[in]	-	SlaveAddr	It is the slave address to send data to
+ * @return		-
+ */
+void I2C_Master_ReceiveData(I2C_Handle_t* pI2CHandle, char* data_buffer, uint8_t size, uint8_t SlaveAddr){
+	//Start condition
+	pI2CHandle->pI2Cx->I2C_CR1 |= (1<<8);
+	//Wait until Start condition was generated
+	while( !(pI2CHandle->pI2Cx->I2C_SR1&1) );
+	//Address phase
+	pI2CHandle->pI2Cx->I2C_DR |= ((SlaveAddr<<1) + 1);	//Shift Slave Address to insert at 0th position the r/w bit (read)
+	//Confirm address phase has been completed
+	while( !((pI2CHandle->pI2Cx->I2C_SR1>>1)&1) );
+	//Clearing Address flag
+	I2C_ClearADDRFlag(pI2CHandle->pI2Cx);
+
+	if(size == 1){
+		//Disable acking
+		pI2CHandle->pI2Cx->I2C_CR1 &= ~(1<<10);
+		//Stop condition
+		pI2CHandle->pI2Cx->I2C_CR1 |= (1<<9);
+		//Clearing Address flag
+		I2C_ClearADDRFlag(pI2CHandle->pI2Cx);
+		//Wait until RXNE becomes 1
+		while( !((pI2CHandle->pI2Cx->I2C_SR1>>6)&1) );
+		*data_buffer = (char) pI2CHandle->pI2Cx->I2C_DR;
+	}
+
+	if(size > 1){
+		//Clearing Address flag
+		I2C_ClearADDRFlag(pI2CHandle->pI2Cx);
+		for(int i = size; i > 0; i--){
+			if(size == 2){
+				//Disable acking
+				pI2CHandle->pI2Cx->I2C_CR1 &= ~(1<<10);
+				//Stop condition
+				pI2CHandle->pI2Cx->I2C_CR1 |= (1<<9);
+			}
+			//Read the data
+			*data_buffer = (char) pI2CHandle->pI2Cx->I2C_DR;
+			//Increment buffer address
+			data_buffer++;
+
+		}
+	}
+	//Reenable acking
+	if(pI2CHandle->I2C_Config.I2C_ACK_CTRL == I2C_ACK_ENABLE ){
+		//Enable the acknowledge
+		pI2CHandle->pI2Cx->I2C_CR1 |= (pI2CHandle->I2C_Config.I2C_ACK_CTRL << 10);
+	}
+}
 
 /***************************************************
  * @fn			-	I2C_IRQ_Mode

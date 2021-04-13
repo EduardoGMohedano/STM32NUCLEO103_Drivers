@@ -81,6 +81,7 @@ void I2C_PeripheralControl(I2C_RegDef_t* pI2Cx, uint8_t EnorDi);
  * Functions to read and write through the given I2C Peripheral
  */
 void I2C_Master_SendData(I2C_RegDef_t* pI2Cx, char* data_buffer, uint8_t size, uint8_t SlaveAddr);
+void I2C_Master_ReceiveData(I2C_Handle_t* pI2CHandle, char* data_buffer, uint8_t size, uint8_t SlaveAddr);
 char I2C_Read(I2C_RegDef_t* pI2Cx);
 
 /*
