@@ -65,8 +65,8 @@ typedef struct{
 /*
  * Clock Phase
  */
-#define 	FIRST_CLK_TRANSITION	0
-#define 	SECOND_CLK_TRANSITION	1
+#define 	SPI_CPHA_LOW	0		// The first clock transition is the first data capture edge
+#define 	SPI_CPHA_HIGH	1
 
 /*
  *@SPI Clock Modes
@@ -144,7 +144,8 @@ void SPI_SSI_Config(SPI_RegDef_t* pSPIx, uint8_t EnorDi);
  */
 void 		SPI_Write_Char(SPI_RegDef_t* pSPIx, uint32_t data);
 void 		SPI_Write_String(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size);
-uint16_t	SPI_ReadData(SPI_RegDef_t* pSPIx);  /*Data are declared as pointers*/
+uint16_t	SPI_ReadChar(SPI_RegDef_t* pSPIx);
+void		SPI_ReadData(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size);  /*Data are declared as pointers*/
 
 /*
  * IRQ handler and its configuration

@@ -24,7 +24,7 @@ void SPI_Init(SPI_Handle_t* pSPIHandle){
 	//I might need to reset the whole register or peripheral in order to really write the correct settings using OR operator
 	pSPIHandle->pSPIx->SPI_CR1 |= (pSPIHandle->SPI_PinConfig.SPI_CPOL << SPI_CR1_CPOL);		//CPOL SETTING
 	pSPIHandle->pSPIx->SPI_CR1 |= (pSPIHandle->SPI_PinConfig.SPI_CPHA << SPI_CR1_CPHA);		//CPHA SETTING
-	pSPIHandle->pSPIx->SPI_CR1 |= (pSPIHandle->SPI_PinConfig.SPI_Data_Frame_Format << SPI_CR1_BUFFER_S);	//Buffer size
+	pSPIHandle->pSPIx->SPI_CR1 |= (pSPIHandle->SPI_PinConfig.SPI_Data_Frame_Format << SPI_CR1_DFF);	//Buffer size
 	pSPIHandle->pSPIx->SPI_CR1 |= (pSPIHandle->SPI_PinConfig.SPI_Frame_Format << SPI_CR1_DFF);	//Data Frame Format MSB or LSB first
 	//By default the SPI will be handled by hardware (Chip select must be physically wired)
 	if ( 0 == pSPIHandle->SPI_PinConfig.SPI_SSM ){
@@ -163,7 +163,7 @@ void SPI_SSI_Config(SPI_RegDef_t* pSPIx, uint8_t EnorDi){
  */
 void 	SPI_Write_Char(SPI_RegDef_t* pSPIx, uint32_t data){
 		while( ((pSPIx->SPI_SR>>SPI_SR_TXE)&1) == 0x0 );	//Blocking function to wait until Buffer is empty and avoid corrupting data
-		if( (pSPIx->SPI_CR1>>SPI_CR1_BUFFER_S)&1   ){
+		if( (pSPIx->SPI_CR1>>SPI_CR1_DFF)&1   ){
 			pSPIx->SPI_DR = (uint16_t) data;
 		}
 		else{
@@ -188,7 +188,7 @@ void 	SPI_Write_String(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size){
 
 	while(size > 0){
 		while( ((pSPIx->SPI_SR>>SPI_SR_TXE)&1) == 0x0 );	//Blocking function to wait until Buffer is empty and avoid corrupting data
-		if( (pSPIx->SPI_CR1>>SPI_CR1_BUFFER_S)&1   ){
+		if( (pSPIx->SPI_CR1>>SPI_CR1_DFF)&1   ){
 			pSPIx->SPI_DR = *((uint16_t*)data);
 			size-=2;
 			(uint16_t*)data++;
@@ -199,6 +199,22 @@ void 	SPI_Write_String(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size){
 			data++;
 		}
 	}
+}
+
+/***************************************************
+ * @fn			-	SPI_ReadChar
+ *
+ * @brief		-	This function reads data from the DATA REGISTER
+ *
+ * @param[in]	-	SPI_Register definition pointer to read from
+ *
+ * @return		-	none
+ *
+ * @Note		- 	none
+ */
+uint16_t	SPI_ReadChar(SPI_RegDef_t* pSPIx){
+	while( ! (pSPIx->SPI_SR&1) );	//Blocking function to wait until Buffer is not empty and avoid corrupting received data
+	return pSPIx->SPI_DR;
 }
 
 /***************************************************
@@ -214,11 +230,21 @@ void 	SPI_Write_String(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size){
  *
  * @Note		- 	none
  */
-uint16_t	SPI_ReadData(SPI_RegDef_t* pSPIx){
-	while( (pSPIx->SPI_SR&1) == 0 );	//Blocking function to wait until Buffer is not empty and avoid corrupting received data
-	return pSPIx->SPI_DR;
+void	SPI_ReadData(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size){
+	while(size > 0){
+		while( ((pSPIx->SPI_SR>>SPI_SR_RXNE)&1) == 0x0 );	//Blocking function to wait until Buffer is not empty and avoid corrupting received data
+		if( (pSPIx->SPI_CR1>>SPI_CR1_DFF)&1  ){
+			*((uint16_t*)data) = pSPIx->SPI_DR ;
+			size-=2;
+			(uint16_t*)data++;
+		}
+		else{
+			*data = pSPIx->SPI_DR;
+			size--;
+			data++;
+		}
+	}
 }
-
 
 /***************************************************
  * @fn			-	SPI_IRQ_Mode
