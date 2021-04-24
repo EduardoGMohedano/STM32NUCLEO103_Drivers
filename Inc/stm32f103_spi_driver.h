@@ -9,6 +9,7 @@
 #define INC_STM32F103_SPI_DRIVER_H_
 
 #include "stm32f103.h"
+#include <stddef.h>
 
 /*
  * This structure is used to set the SPI settings
@@ -29,8 +30,29 @@ typedef struct{
 typedef struct{
 	SPI_RegDef_t	*pSPIx;
 	SPI_Config_t	SPI_PinConfig;
+	uint8_t			*pTxBuffer;
+	uint8_t			*pRxBuffer;
+	uint32_t		TxLen;
+	uint32_t		RxLen;
+	uint8_t			TxState;
+	uint8_t			RxState;
 }SPI_Handle_t;
 
+
+/*
+ * Macros to define current SPI state
+ */
+#define		SPI_READY		(0)
+#define		SPI_BUSY_IN_RX	(1)
+#define 	SPI_BUSY_IN_TX	(2)
+
+/*
+ * Possible SPI application events
+ */
+#define		SPI_EVENT_TX_CMPLT		1
+#define		SPI_EVENT_RX_CMPLT		2
+#define		SPI_EVENT_OVR_ERR		3
+#define		SPI_EVENT_CRC_ERR		4
 
 /*
  * Data Frame Format values
@@ -95,24 +117,13 @@ typedef struct{
 #define 	SPI_PCLK_DIV256		7
 
 /*
- * Macros to enable or disable the SPI (this is different from enabling the Peripheral clock)
- */
-#define		SPI1_ENABLE()				SPI1->SPI_CR1 |= (1<<6)
-#define		SPI2_ENABLE()				SPI2->SPI_CR1 |= (1<<6)
-#define		SPI3_ENABLE()				SPI3->SPI_CR1 |= (1<<6)
-
-#define		SPI1_DISNABLE()				SPI1->SPI_CR1 &= ~(1<<6)
-#define		SPI2_DISNABLE()				SPI2->SPI_CR1 &= ~(1<<6)
-#define		SPI3_DISNABLE()				SPI3->SPI_CR1 &= ~(1<<6)
-
-/*
  * SPI Definitions for Interrupt sources (Mode)
  */
 #define		SPI_IRQ_TX_BUFFER_EMPTY			(7)		//Interrupt when the transmit buffer is empty
 #define		SPI_IRQ_RX_BUFFER_NOEMPTY		(6)		//Interrupt when the receiver buffer is not empty which means data can be read
 #define		SPI_IRQ_ERROR					(5)		//Interrupt for either Overrun o Underrun error *It is needed to check for their respective flags
 #define 	SPI_IRQ_TX_DMA					(1)		//Interrupt fro TX DMA buffer
-
+#define 	SPI_IRQ_RX_DMA					(0)
 
 /*****************************************************************************
  *                    APIs supported by this driver
@@ -147,11 +158,14 @@ void 		SPI_Write_String(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size);
 uint16_t	SPI_ReadChar(SPI_RegDef_t* pSPIx);
 void		SPI_ReadData(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size);  /*Data are declared as pointers*/
 
+uint8_t 	SPI_Write_StringIT(SPI_Handle_t* pSPIHandle, uint8_t* data, uint32_t size);
+uint8_t		SPI_ReadDataIT(SPI_Handle_t* pSPIHandle, uint8_t* data, uint32_t size);
+
 /*
  * IRQ handler and its configuration
  */
 void SPI_IRQ_Mode(SPI_RegDef_t* pSPIx, uint8_t Mode, uint8_t EnorDi);		//This function is used to configure Rising or Falling edge Interrupt Trigger
 void SPI_IRQConfig(uint8_t IRQNumber,uint8_t IRQPriority, uint8_t EnorDi);
-void SPI_IRQHandling(uint8_t IRQNumber);
+void SPI_IRQHandling(SPI_Handle_t* pSPIHandle);
 
 #endif /* INC_STM32F103_SPI_DRIVER_H_ */

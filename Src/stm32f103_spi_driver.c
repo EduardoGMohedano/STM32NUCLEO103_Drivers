@@ -7,7 +7,9 @@
 
 #include "stm32f103_spi_driver.h"
 
-
+static void		spi_txe_it_handle(SPI_Handle_t* pSPIHandle);
+static void	 	spi_rxe_it_handle(SPI_Handle_t* pSPIHandle);
+static void		spi_ovr_it_handle(SPI_Handle_t* pSPIHandle);
 
 /***************************************************
  * @fn			-	SPI_INIT
@@ -202,6 +204,37 @@ void 	SPI_Write_String(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size){
 }
 
 /***************************************************
+ * @fn			-	SPI_Write_StringIT
+ *
+ * @brief		-	This function writes data to the Buffer in non-blocking mode
+ *
+ * @param[in]	-	pSPIHandle pointer to handle struct
+ * @param[in]	-	data in 32 bits type
+ * @param[in]	-	size is the actual data buffer size
+ *
+ * @return		-	none
+ *
+ * @Note		- 	none
+ */
+uint8_t	SPI_Write_StringIT(SPI_Handle_t* pSPIHandle, uint8_t* data, uint32_t size){
+	uint8_t state = pSPIHandle->TxState;
+	if( state != SPI_BUSY_IN_TX ){
+		//Save the tx buffer and lenght in global variables
+		pSPIHandle->pTxBuffer = data;
+		pSPIHandle->TxLen = size;
+
+		//Mark SPI state as busy
+		pSPIHandle->TxState = SPI_BUSY_IN_TX;
+
+		//enable TXE interrupt source
+		pSPIHandle->pSPIx->SPI_CR2 |= (1 << SPI_IRQ_TX_BUFFER_EMPTY );
+
+		//data transmission will be handled by isr
+	}
+	return state;
+}
+
+/***************************************************
  * @fn			-	SPI_ReadChar
  *
  * @brief		-	This function reads data from the DATA REGISTER
@@ -246,18 +279,49 @@ void	SPI_ReadData(SPI_RegDef_t* pSPIx, uint8_t* data, uint32_t size){
 	}
 }
 
+
+/***************************************************
+ * @fn			-	SPI_ReadDataIT
+ *
+ * @brief		-	This function reads data to the Buffer in non-blocking mode
+ *
+ * @param[in]	-	pSPIHandle pointer to handle struct
+ * @param[in]	-	data in 32 bits type
+ * @param[in]	-	size is the actual data buffer size
+ *
+ * @return		-	none
+ *
+ * @Note		- 	none
+ */
+uint8_t		SPI_ReadDataIT(SPI_Handle_t* pSPIHandle, uint8_t* data, uint32_t size){
+	uint8_t state = pSPIHandle->RxState;
+	if( state != SPI_BUSY_IN_RX ){
+		//Save the tx buffer and lenght in global variables
+		pSPIHandle->pRxBuffer = data;
+		pSPIHandle->RxLen = size;
+
+		//Mark SPI state as busy
+		pSPIHandle->RxState = SPI_BUSY_IN_TX;
+
+		//enable TXE interrupt source
+		pSPIHandle->pSPIx->SPI_CR2 |= (1 << SPI_IRQ_RX_BUFFER_NOEMPTY );
+
+		//data transmission will be handled by isr
+	}
+	return state;
+}
+
 /***************************************************
  * @fn			-	SPI_IRQ_Mode
  *
- * @brief		-	This function sets the respective Interruption source for SPI
+ * @brief		-	This function enables/disables the respective Interruption source for SPI
  *
  * @param[in]	-	SPI_Register definition pointer
  * @param[in]	-	Mode to indicate the possible SPI Interrupt
  * @param[in]	-	EnorDi to enable or disable Interruption source
  *
  * @return		-	none
- *
- * @Note		- 	none
+
  */
 void SPI_IRQ_Mode(SPI_RegDef_t* pSPIx, uint8_t Mode, uint8_t EnorDi){
 	if(EnorDi){
@@ -307,11 +371,84 @@ void SPI_IRQConfig(uint8_t IRQNumber,uint8_t IRQPriority, uint8_t EnorDi){
  *
  * @Note		- 	none
  */
-void SPI_IRQHandling(uint8_t IRQNumber){
+void SPI_IRQHandling(SPI_Handle_t* pSPIHandle){
 	//Clear the pending register bit for the interruption
-	uint8_t reg_pos = IRQNumber/32;
+	/*uint8_t reg_pos = IRQNumber/32;
 	uint32_t irq_no = IRQNumber - (32*reg_pos);
 	if( (NVIC->icpr[reg_pos]>>irq_no) & 1 ){
 		NVIC->icpr[reg_pos] |= (1<<irq_no);
+	}*/
+
+	//check flags to get Interrupt source
+	uint8_t temp1, temp2;
+	temp1 = pSPIHandle->pSPIx->SPI_SR & (1 << SPI_SR_TXE);
+	temp2 = pSPIHandle->pSPIx->SPI_CR2 & (1 << SPI_IRQ_TX_BUFFER_EMPTY);
+
+	if( temp1 && temp2 ){
+		//handle TXE
+		spi_txe_it_handle(pSPIHandle);
 	}
+	//check for rxne
+	temp1 = pSPIHandle->pSPIx->SPI_SR & (1 << SPI_SR_RXNE);
+	temp2 = pSPIHandle->pSPIx->SPI_CR2 & (1 << SPI_IRQ_RX_BUFFER_NOEMPTY);
+	if( temp1 && temp2 ){
+		//handle RXE
+		spi_rxe_it_handle(pSPIHandle);
+	}
+	//check for ovr
+	temp1 = pSPIHandle->pSPIx->SPI_SR & (1 << 6);
+	temp2 = pSPIHandle->pSPIx->SPI_CR2 & (1 << SPI_IRQ_ERROR);
+	if( temp1 && temp2 ){
+		//handle RXE
+		spi_ovr_it_handle(pSPIHandle);
+	}
+}
+
+/*Helper private functions*/
+static void		spi_txe_it_handle(SPI_Handle_t* pSPIHandle){
+	if( (pSPIHandle->pSPIx->SPI_CR1>>SPI_CR1_DFF)&1   ){
+		pSPIHandle->pSPIx->SPI_DR = *((uint16_t*)pSPIHandle->pTxBuffer);
+		pSPIHandle->TxLen-=2;
+		(uint16_t*)pSPIHandle->pTxBuffer++;
+	}
+	else{
+		pSPIHandle->pSPIx->SPI_DR = *(pSPIHandle->pTxBuffer);
+		pSPIHandle->TxLen--;
+		pSPIHandle->pTxBuffer++;
+	}
+
+	if(! pSPIHandle->TxLen){
+		//TX is over
+		pSPIHandle->pSPIx->SPI_CR2 &= ~(1 << SPI_IRQ_TX_BUFFER_EMPTY);
+		pSPIHandle->pTxBuffer = NULL;
+		pSPIHandle->TxState = SPI_READY;
+		SPI_ApplicationEventCallback(pSPIHandle,SPI_EVENT_TX_CMPLT);
+	}
+}
+
+static void	 	spi_rxe_it_handle(SPI_Handle_t* pSPIHandle){
+	if( (pSPIHandle->pSPIx->SPI_CR1>>SPI_CR1_DFF)&1  ){
+		*((uint16_t*)pSPIHandle->pRxBuffer) = pSPIHandle->pSPIx->SPI_DR ;
+		pSPIHandle->RxLen-=2;
+		(uint16_t*)pSPIHandle->pRxBuffer++;
+	}
+	else{
+		*pSPIHandle->pRxBuffer = pSPIHandle->pSPIx->SPI_DR;
+		pSPIHandle->RxLen--;
+		pSPIHandle->pRxBuffer++;
+	}
+
+	if(! pSPIHandle->RxLen ){
+		//RX is over
+		pSPIHandle->pSPIx->SPI_CR2 &= ~(1 << SPI_IRQ_RX_BUFFER_NOEMPTY);
+		pSPIHandle->pRxBuffer = NULL;
+		pSPIHandle->RxLen = 0;
+		pSPIHandle->RxState = SPI_READY;
+		SPI_ApplicationEventCallback(pSPIHandle,SPI_EVENT_RX_CMPLT);
+	}
+
+}
+
+static void		spi_ovr_it_handle(SPI_Handle_t* pSPIHandle){
+
 }
