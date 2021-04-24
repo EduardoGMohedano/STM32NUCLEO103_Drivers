@@ -1,7 +1,7 @@
 /*
  * 006_SPI_SEND_BUFFER.c
  * This file is used to test sending data over the SPI1 using low level driver
- * A "Hello world!" text will be sent by SPI which is configured as Master
+ * A "Hello world!" text will be sent by SPI which is configured as Master when board button is pressed
  *
  *  Created on: 10 ene. 2021
  *      Author: egarc
@@ -23,11 +23,12 @@ int main(void)
 
 	/* Button config */
 	GPIO_Handle_t	gpiobtn;
-	gpiobtn.pGPIOx = GPIOA;
+	gpiobtn.pGPIOx = GPIOC;
 	gpiobtn.GPIO_PinConfig.PinMode = GPIO_MODE_IN_PU_PD;
-	gpiobtn.GPIO_PinConfig.PinNumber = 10;
+	gpiobtn.GPIO_PinConfig.PinNumber = 13;
 	gpiobtn.GPIO_PinConfig.PinSpeed = GPIO_MODE_INPUT;
 	gpiobtn.GPIO_PinConfig.PinResistor = GPIO_PU;       /*Pull up resistor activated*/
+	GPIO_PeriCLKControl(GPIOC,ENABLE);
 	GPIO_Init(&gpiobtn);
 
 
@@ -35,7 +36,7 @@ int main(void)
     SPI_Handle_t spi_master;
     spi_master.pSPIx = SPI1;
     spi_master.SPI_PinConfig.SPI_Baud_Rate = SPI_PCLK_DIV256;
-    spi_master.SPI_PinConfig.SPI_CPHA = SECOND_CLK_TRANSITION;
+    spi_master.SPI_PinConfig.SPI_CPHA = SPI_CPHA_HIGH;
     spi_master.SPI_PinConfig.SPI_CPOL = SPI_CPOL_HIGH;
     spi_master.SPI_PinConfig.SPI_Data_Frame_Format = Data_Format_8_bits;	//Later try using 16 bits
     spi_master.SPI_PinConfig.SPI_Frame_Format = MSB_First;
@@ -50,10 +51,10 @@ int main(void)
 	while(1)
 	{
 		//Wait until button is pressed
-		/*while( ! GPIO_ReadFromInputPin(GPIOA, 10) );
+		while( GPIO_ReadFromInputPin(GPIOC, 13) );
 
-		//debounced effect
-		delay_ms(9500);*/
+		//debouncing effect
+		delay_ms(250000);
 
 		SPI_PeripheralControl(SPI1, ENABLE);
 		SPI_Write_String(SPI1, (uint8_t*) datos, strlen(datos));
@@ -61,7 +62,6 @@ int main(void)
 		//Confirming spi is not busy
 		while( (SPI1->SPI_SR>>7)&1 );
 		SPI_PeripheralControl(SPI1, DISABLE);
-		delay_ms(10000);
 
 	}
 }

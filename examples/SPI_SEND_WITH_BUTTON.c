@@ -14,8 +14,7 @@
 #include "stm32f103_gpio_driver.h"
 #include "stm32f103_spi_driver.h"
 
-#define  command		(0xAB)
-#define  arduino_pin	(10)
+#define  command		'W'
 
 void config_spi1_pins(void);
 void delay_ms(uint32_t time);
@@ -27,11 +26,12 @@ int main(void)
 
 	/* Button config */
 	GPIO_Handle_t	gpiobtn;
-	gpiobtn.pGPIOx = GPIOA;
+	gpiobtn.pGPIOx = GPIOC;
 	gpiobtn.GPIO_PinConfig.PinMode = GPIO_MODE_IN_PU_PD;
-	gpiobtn.GPIO_PinConfig.PinNumber = 10;
+	gpiobtn.GPIO_PinConfig.PinNumber = 13;
 	gpiobtn.GPIO_PinConfig.PinSpeed = GPIO_MODE_INPUT;
 	gpiobtn.GPIO_PinConfig.PinResistor = GPIO_PU;       /*Pull up resistor activated*/
+	GPIO_PeriCLKControl(GPIOC,ENABLE);
 	GPIO_Init(&gpiobtn);
 
 
@@ -39,7 +39,7 @@ int main(void)
     SPI_Handle_t spi_master;
     spi_master.pSPIx = SPI1;
     spi_master.SPI_PinConfig.SPI_Baud_Rate = SPI_PCLK_DIV256;
-    spi_master.SPI_PinConfig.SPI_CPHA = SECOND_CLK_TRANSITION;
+    spi_master.SPI_PinConfig.SPI_CPHA = SPI_CPHA_HIGH;
     spi_master.SPI_PinConfig.SPI_CPOL = SPI_CPOL_HIGH;
     spi_master.SPI_PinConfig.SPI_Data_Frame_Format = Data_Format_8_bits;	//Later try using 16 bits
     spi_master.SPI_PinConfig.SPI_Frame_Format = MSB_First;
@@ -48,35 +48,38 @@ int main(void)
     SPI_PeriCLKControl(SPI1,ENABLE);
     SPI_Init(&spi_master);
     char *data = "Hello world\n";
-    uint8_t dummy_data = 0xFA;
+    uint8_t dummy_data = 'd';
     uint8_t received_data;
 
 	while(1)
 	{
 		//Wait until button is pressed
-		while( ! GPIO_ReadFromInputPin(GPIOA, 10) );
+		while ( GPIO_ReadFromInputPin(GPIOC, 13) );
 
 		//debounced effect
-		delay_ms(200000);
+		delay_ms(250000);
 
 		SPI_PeripheralControl(SPI1, ENABLE);
 		//Sending command to the slave
-		SPI_Write_Char(SPI1, (uint32_t) command);
+		SPI_Write_Char(SPI1, (uint8_t) command);
+		SPI_Write_Char(SPI1, (uint8_t) command);
 
 		//Send dummy data to read from slave
-		SPI_Write_Char(SPI1, (uint32_t) dummy_data);
+		SPI_Write_Char(SPI1, (uint8_t) dummy_data);
 
 		//Read data to Acknowledge Slave received the command
-		received_data = (uint8_t) SPI_ReadData(SPI1);
+		SPI_ReadData(SPI1,&received_data,1);
 
-		if(received_data){
+		//Send back received data
+		SPI_Write_Char(SPI1, (uint8_t) received_data);
+
+		if(received_data == 0xF5){
 			SPI_Write_String(SPI1, (uint8_t*) data, strlen(data));
 		}
 
 		//Confirming spi is not busy
 		while( (SPI1->SPI_SR>>7)&1 );
 		SPI_PeripheralControl(SPI1, DISABLE);
-
 	}
 }
 
@@ -89,6 +92,15 @@ void config_spi1_pins(){
 	mosi_pin.GPIO_PinConfig.PinSpeed = GPIO_MODE_OUT_HS;
 	GPIO_PeriCLKControl(GPIOA,ENABLE);
 	GPIO_Init(&mosi_pin);
+
+	/* MISO PIN CONFIG PA6 NO_REMAP*/
+	GPIO_Handle_t	miso_pin;
+	miso_pin.pGPIOx = GPIOA;
+	miso_pin.GPIO_PinConfig.PinMode = GPIO_MODE_IN_PU_PD;
+	miso_pin.GPIO_PinConfig.PinNumber = 6;
+	miso_pin.GPIO_PinConfig.PinSpeed = GPIO_MODE_INPUT;
+	miso_pin.GPIO_PinConfig.PinResistor = GPIO_PU;       /*Pull up resistor activated*/
+	GPIO_Init(&miso_pin);
 
 	/*SCLK PIN CONFIG PA5 NO_REMAP*/
 	GPIO_Handle_t	sck_pin;
