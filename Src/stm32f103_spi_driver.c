@@ -373,11 +373,12 @@ void SPI_IRQConfig(uint8_t IRQNumber,uint8_t IRQPriority, uint8_t EnorDi){
  */
 void SPI_IRQHandling(SPI_Handle_t* pSPIHandle){
 	//Clear the pending register bit for the interruption
-	/*uint8_t reg_pos = IRQNumber/32;
+	uint8_t IRQNumber = IRQ_NO_SPI1 ;
+	uint8_t reg_pos = IRQNumber/32;
 	uint32_t irq_no = IRQNumber - (32*reg_pos);
 	if( (NVIC->icpr[reg_pos]>>irq_no) & 1 ){
 		NVIC->icpr[reg_pos] |= (1<<irq_no);
-	}*/
+	}
 
 	//check flags to get Interrupt source
 	uint8_t temp1, temp2;
@@ -450,5 +451,21 @@ static void	 	spi_rxe_it_handle(SPI_Handle_t* pSPIHandle){
 }
 
 static void		spi_ovr_it_handle(SPI_Handle_t* pSPIHandle){
+	uint8_t temp;
+	//clear the overrun flag
+	if(pSPIHandle->TxState != SPI_BUSY_IN_TX){
+		temp = pSPIHandle->pSPIx->SPI_DR;
+		temp = pSPIHandle->pSPIx->SPI_SR;
+	}
+	(void) temp;
+	//inform the application
+	SPI_ApplicationEventCallback(pSPIHandle,SPI_EVENT_OVR_ERR);
+}
+
+
+/*
+ * Weak implementation of SPI application callback
+ */
+__attribute__((weak)) void SPI_ApplicationEventCallback(SPI_Handle_t* pSPIHandle,uint8_t AppEv){
 
 }

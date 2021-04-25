@@ -168,4 +168,9 @@ void SPI_IRQ_Mode(SPI_RegDef_t* pSPIx, uint8_t Mode, uint8_t EnorDi);		//This fu
 void SPI_IRQConfig(uint8_t IRQNumber,uint8_t IRQPriority, uint8_t EnorDi);
 void SPI_IRQHandling(SPI_Handle_t* pSPIHandle);
 
+/*
+ * Application callback
+ */
+void SPI_ApplicationEventCallback(SPI_Handle_t* pSPIHandle,uint8_t AppEv);
+
 #endif /* INC_STM32F103_SPI_DRIVER_H_ */
