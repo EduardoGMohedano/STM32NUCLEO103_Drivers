@@ -11,8 +11,8 @@ CP=arm-none-eabi-objcopy
 src=$(wildcard ./Src/*.c)
 inc=-I './Inc/'
 
-ARCHFLAGS=-mcpu=cortex-m3 -std=gnu11 --specs=nano.specs -mfloat-abi=soft -mthumb
-CFLAGS=-Wall -g -O0 -std=c99
+ARCHFLAGS=-mcpu=cortex-m3 --specs=nano.specs -mfloat-abi=soft -mthumb
+CFLAGS=-ffunction-sections -fdata-sections -Wall -g -O0 -std=gnu11
 startup=startup_stm32f103rbtx
 linker_file=STM32F103RBTX_FLASH.ld
 target=./examples/$(output)
