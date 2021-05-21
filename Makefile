@@ -2,9 +2,6 @@
 #	drivers: This recipe will generate the object files of all Low level Drivers but will not link
 #	all: 	This recipe will compile and link the respective given file and will generate a binary file
 
-
-
-
 CC=arm-none-eabi-gcc
 SIZE=arm-none-eabi-size
 CP=arm-none-eabi-objcopy
@@ -22,7 +19,8 @@ src+=$(target).c
 
 objs:=$(src:.c=.o)
 %.o: %.c
-	 $(CC) $< $(CFLAGS) $(inc) $(ARCHFLAGS) -c -o $@
+	@echo "Object files for all drivers were generated!!!"
+	$(CC) $< $(CFLAGS) $(inc) $(ARCHFLAGS) -c -o $@
 
 .PHONY: all
 all:	$(objs)	
@@ -30,12 +28,6 @@ all:	$(objs)
 	$(CC) $(objs) $(startup).o $(ARCHFLAGS) -T"./"$(linker_file) --specs=nosys.specs -o $(target).elf   
 	$(SIZE)	$(target).elf 
 	$(CP) -O binary	$(target).elf $(target).bin 
-
-.PHONY: drivers
-drivers: $(objs)
-	@echo $(objs)
-	@echo "Object files for all drivers were generated!!!"
-	
 
 .PHONY:	clean
 clean:
