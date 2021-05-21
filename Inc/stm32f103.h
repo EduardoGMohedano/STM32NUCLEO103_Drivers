@@ -384,6 +384,7 @@ typedef struct{
 #define SPI_CR1_DFF			7
 #define SPI_CR1_BUFFER_S	11
 #define SPI_SR_TXE			1	//Transmit Buffer empty flag
+#define SPI_SR_RXNE			0
 
 
 /*
