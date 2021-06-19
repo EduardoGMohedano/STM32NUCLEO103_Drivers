@@ -1,10 +1,11 @@
 #Rules to compile for target STM32F103RB
-#	drivers: This recipe will generate the object files of all Low level Drivers but will not link
+#	clean:  This recipe will remove all the object files of all Low level Drivers including binary and elf files
 #	all: 	This recipe will compile and link the respective given file and will generate a binary file
 
 CC=arm-none-eabi-gcc
 SIZE=arm-none-eabi-size
 CP=arm-none-eabi-objcopy
+SF=st-flash
 src=$(wildcard ./Src/*.c)
 inc=-I './Inc/'
 
@@ -28,9 +29,16 @@ all:	$(objs)
 	$(CC) $(objs) $(startup).o $(ARCHFLAGS) -T"./"$(linker_file) --specs=nosys.specs -o $(target).elf   
 	$(SIZE)	$(target).elf 
 	$(CP) -O binary	$(target).elf $(target).bin 
+	@mkdir ./Output 
+	@mv ./examples/*.elf ./examples/*.bin ./Output
+
+.PHONY: flash
+flash:	
+	@echo "Flashing on the target..."
+	$(SF) write ./Output/*.bin 0x8000000	
 
 .PHONY:	clean
 clean:
 	@echo "Removing object files and target binary!!!"
-	@rm -f $(objs) $(startup).o ./examples/*.elf ./examples/*.o ./examples/*.bin  
-
+	@rm -f $(objs) $(startup).o ./examples/*.elf ./examples/*.o ./examples/*.bin 
+	@rm -rf ./Output
