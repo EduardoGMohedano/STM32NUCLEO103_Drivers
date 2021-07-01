@@ -14,7 +14,7 @@ In order to build any example in examples folder, execute make to generate an ex
 
 make output=000_GPIO_volatile
 
-In case you don't pass an argument to outputt variable, by default 000_GPIO_volatile.c example will be built.
+In case you don't pass an argument to output variable, by default 000_GPIO_volatile.c example will be built.
 
 You can generate all driver object files (not linked yet), by using:
 make drivers
