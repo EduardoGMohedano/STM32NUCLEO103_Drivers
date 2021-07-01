@@ -13,24 +13,34 @@ ARCHFLAGS=-mcpu=cortex-m3 --specs=nano.specs -mfloat-abi=soft -mthumb
 CFLAGS=-ffunction-sections -fdata-sections -Wall -g -O0 -std=gnu11
 startup=startup_stm32f103rbtx
 linker_file=STM32F103RBTX_FLASH.ld
+#Default target to be built
+output:=000_GPIO_volatile
 target=./examples/$(output)
+target_obj:=$(target).o
+
 
 #append main file
-src+=$(target).c
+#src+=$(target).c
 
 objs:=$(src:.c=.o)
 %.o: %.c
-	@echo "Object files for all drivers were generated!!!"
-	$(CC) $< $(CFLAGS) $(inc) $(ARCHFLAGS) -c -o $@
+	@echo "Building target: " $@
+	@$(CC) $< $(CFLAGS) $(inc) $(ARCHFLAGS) -c -o $@
 
 .PHONY: all
-all:	$(objs)	
-	$(CC) $(startup).s $(CFLAGS) $(ARCHFLAGS) -c -o $(startup).o
-	$(CC) $(objs) $(startup).o $(ARCHFLAGS) -T"./"$(linker_file) --specs=nosys.specs -o $(target).elf   
-	$(SIZE)	$(target).elf 
-	$(CP) -O binary	$(target).elf $(target).bin 
+all:	drivers	
+	@$(CC) $(target).c $(CFLAGS) $(inc) $(ARCHFLAGS) -c -o $(target_obj)
+	@$(CC) $(startup).s $(CFLAGS) $(ARCHFLAGS) -c -o $(startup).o
+	@$(CC) $(target_obj) $(objs) $(startup).o $(ARCHFLAGS) -T"./"$(linker_file) --specs=nosys.specs -o $(target).elf   
+	@echo "Building target: $(target)" 
+	@$(SIZE) $(target).elf 
+	@$(CP) -O binary $(target).elf $(target).bin 
 	@mkdir ./Output 
 	@mv ./examples/*.elf ./examples/*.bin ./Output
+
+.PHONY: drivers
+drivers: $(objs)
+
 
 .PHONY: flash
 flash:	
